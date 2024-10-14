@@ -21,4 +21,5 @@ public class ProductListDTO {
     @Builder.Default
     private List<String> tags = new ArrayList<>();
 
+
 }
