@@ -2,6 +2,7 @@ package org.zerock.api1014.product.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,9 +23,12 @@ public class Product {
     private int price;
 
     @ElementCollection
+    @Builder.Default
     private Set<AttachFile> attachFiles=new HashSet<>();
 
     @ElementCollection
+    @Builder.Default
+    @BatchSize(size = 50)
     private Set<String> tags=new HashSet<>();
 
     public void addFile(String filename) {

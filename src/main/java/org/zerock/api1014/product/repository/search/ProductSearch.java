@@ -6,7 +6,7 @@ import org.zerock.api1014.product.domain.Product;
 
 public interface ProductSearch {
 
-    Page<Product> list(Product product, Pageable pageable);
+    Page<Product> list(Pageable pageable);
 
-
+    Page<Product> listByCno(Long cno, Pageable pageable);
 }
