@@ -8,12 +8,19 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.zerock.api1014.security.auth.CustomuserPrincipal;
 import org.zerock.api1014.security.util.JWTUtil;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 
 @Log4j2
@@ -64,6 +71,17 @@ public class JWTCheckFilter extends OncePerRequestFilter {
 
             Map<String, Object> claims = jwtUtil.validateToken(token);
             log.info(claims);
+
+            String email = (String) claims.get("email");
+            String role = (String) claims.get("role");
+
+            Principal userPrincipal = new CustomuserPrincipal(email);
+
+            UsernamePasswordAuthenticationToken authenticationToken
+                    = new UsernamePasswordAuthenticationToken(userPrincipal, null,
+                    List.of(new SimpleGrantedAuthority("ROLE_"+role)));
+            SecurityContext context = SecurityContextHolder.getContext();
+            context.setAuthentication(authenticationToken);
 
             filterChain.doFilter(request, response);//다음단계로 넘겨주기
 
