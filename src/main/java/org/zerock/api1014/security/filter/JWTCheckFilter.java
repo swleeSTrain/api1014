@@ -1,22 +1,35 @@
 package org.zerock.api1014.security.filter;
 
+import com.google.gson.Gson;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.zerock.api1014.security.util.JWTUtil;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.util.Map;
+
 @Log4j2
+@RequiredArgsConstructor
 public class JWTCheckFilter extends OncePerRequestFilter {
+
+    private final JWTUtil jwtUtil;
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
                     //검사안할꺼니
         log.info("shouldNotFilter");
 
         String uri = request.getRequestURI();
-        if(uri.equals("/api/member/makeToken"))
+        log.info("----------------------------------");
+        if(uri.equals("/api/v1/member/makeToken"))
         {
             return true;
         }
@@ -24,11 +37,74 @@ public class JWTCheckFilter extends OncePerRequestFilter {
         return false;
     }
 
-    @Override
+//    @Override //테스트용
+//    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+//        log.info("doFilterInternal");
+//        filterChain.doFilter(request, response);//다음단계로 넘겨주기
+//    }
+
+    @Override //테스트할때는 테스트용쓰기
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         log.info("doFilterInternal");
 
-        filterChain.doFilter(request, response);//다음단계로 넘겨주기
+        log.info(request.getRequestURI());
+
+        String authHeader = request.getHeader("Authorization");
+
+        String token = null;
+        if(authHeader != null && authHeader.startsWith("Bearer ")){
+            token = authHeader.substring(7);
+        }else {
+            makeError(response, Map.of("status",401, "msg","No Access Token") );
+            return;
+        }
+
+        //JWT validate
+        try{
+
+            Map<String, Object> claims = jwtUtil.validateToken(token);
+            log.info(claims);
+
+            filterChain.doFilter(request, response);//다음단계로 넘겨주기
+
+
+        }catch (JwtException e){
+
+            log.info(e.getClass().getName());
+            log.info(e.getMessage());
+            log.info("-------------");
+
+            String classFullName = e.getClass().getName();
+
+            String shortClassName = classFullName.substring(classFullName.lastIndexOf(".") + 1);
+
+            makeError(response, Map.of("status",401,"msg",shortClassName));
+
+            e.printStackTrace();
+        }
+
     }
+
+    private void makeError(HttpServletResponse response, Map<String, Object> map) {
+
+        Gson gson = new Gson();
+        String jsonStr = gson.toJson(map);
+
+        response.setStatus((int)map.get("status"));
+        response.setContentType("application/json");
+
+        try {
+            PrintWriter out  = response.getWriter();
+            out.println(jsonStr);
+            out.close();
+        } catch (IOException e) {
+
+
+            throw new RuntimeException(e);
+        }
+
+
+    }
+
 
 }
