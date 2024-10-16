@@ -17,5 +17,5 @@ public class Cart {
 
     @OneToOne //원투원
     private MemberEntity member;
-
+//테스트
 }
