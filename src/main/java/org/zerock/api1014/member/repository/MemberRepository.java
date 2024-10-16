@@ -7,5 +7,6 @@ import java.util.Optional;
 
 /**/
 public interface MemberRepository extends JpaRepository<MemberEntity, String/*pk타입 문자열*/> {
+    /* 내가직접다해야함 */
 
 }
